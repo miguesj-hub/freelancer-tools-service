@@ -1,0 +1,459 @@
+openapi: 3.0.3
+info:
+  title: Freelancer Tools Service API
+  version: 0.1.0
+  description: >
+    Contract-first API for the Freelance Work Hub (US-01). Manages a strict
+    Client -> Project -> Task -> TimeEntry hierarchy, task states, time-entry
+    classification (billable/administrative) and an hours report. Independent
+    hub: no synchronization with third-party tools (Trello/Toggl/Notion/Sheets).
+servers:
+  - url: /api/v1
+    description: Base path
+
+tags:
+  - name: Clients
+  - name: Projects
+  - name: Tasks
+  - name: TimeEntries
+  - name: Reports
+
+paths:
+  /clients:
+    get:
+      tags: [Clients]
+      operationId: listClients
+      summary: List clients
+      responses:
+        '200':
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Client' }
+    post:
+      tags: [Clients]
+      operationId: createClient
+      summary: Create a client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientRequest' }
+      responses:
+        '201':
+          description: Client created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /clients/{clientId}:
+    parameters:
+      - $ref: '#/components/parameters/ClientId'
+    get:
+      tags: [Clients]
+      operationId: getClient
+      summary: Get a client by id
+      responses:
+        '200':
+          description: The client
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Clients]
+      operationId: updateClient
+      summary: Update a client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientRequest' }
+      responses:
+        '200':
+          description: Updated client
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Clients]
+      operationId: deleteClient
+      summary: Delete a client (rejected if it still has projects)
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /clients/{clientId}/projects:
+    parameters:
+      - $ref: '#/components/parameters/ClientId'
+    get:
+      tags: [Projects]
+      operationId: listProjectsByClient
+      summary: List projects for a client
+      responses:
+        '200':
+          description: Projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Project' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Projects]
+      operationId: createProject
+      summary: Create a project under a client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectRequest' }
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /projects/{projectId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [Projects]
+      operationId: getProject
+      responses:
+        '200':
+          description: The project
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Projects]
+      operationId: deleteProject
+      summary: Delete a project (rejected if it still has tasks)
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /projects/{projectId}/tasks:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [Tasks]
+      operationId: listTasksByProject
+      responses:
+        '200':
+          description: Tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Task' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Tasks]
+      operationId: createTask
+      summary: Create a task under a project (defaults to TO_DO)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TaskRequest' }
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /tasks/{taskId}:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    get:
+      tags: [Tasks]
+      operationId: getTask
+      responses:
+        '200':
+          description: The task
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Tasks]
+      operationId: deleteTask
+      summary: Delete a task (rejected if it still has time entries)
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /tasks/{taskId}/status:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    patch:
+      tags: [Tasks]
+      operationId: updateTaskStatus
+      summary: Change task status (TO_DO / IN_PROGRESS / DONE)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TaskStatusUpdate' }
+      responses:
+        '200':
+          description: Updated task
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /tasks/{taskId}/time-entries:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    get:
+      tags: [TimeEntries]
+      operationId: listTimeEntriesByTask
+      responses:
+        '200':
+          description: Time entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TimeEntry' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [TimeEntries]
+      operationId: logTimeEntry
+      summary: Log time against a task (default type BILLABLE)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TimeEntryRequest' }
+      responses:
+        '201':
+          description: Time entry created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimeEntry' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /time-entries/{timeEntryId}/classification:
+    parameters:
+      - $ref: '#/components/parameters/TimeEntryId'
+    patch:
+      tags: [TimeEntries]
+      operationId: classifyTimeEntry
+      summary: Re-classify a time entry as BILLABLE or ADMINISTRATIVE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TimeEntryClassificationUpdate' }
+      responses:
+        '200':
+          description: Updated time entry
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimeEntry' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /reports/hours:
+    get:
+      tags: [Reports]
+      operationId: getHoursReport
+      summary: Hours report grouped by billable vs administrative
+      parameters:
+        - in: query
+          name: clientId
+          schema: { type: string }
+          required: false
+        - in: query
+          name: projectId
+          schema: { type: string }
+          required: false
+        - in: query
+          name: taskId
+          schema: { type: string }
+          required: false
+      responses:
+        '200':
+          description: Hours report
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HoursReport' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+components:
+  parameters:
+    ClientId:
+      in: path
+      name: clientId
+      required: true
+      schema: { type: string }
+    ProjectId:
+      in: path
+      name: projectId
+      required: true
+      schema: { type: string }
+    TaskId:
+      in: path
+      name: taskId
+      required: true
+      schema: { type: string }
+    TimeEntryId:
+      in: path
+      name: timeEntryId
+      required: true
+      schema: { type: string }
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    ValidationError:
+      description: Invalid input
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    Conflict:
+      description: Operation rejected because dependent records exist
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+
+  schemas:
+    TaskStatus:
+      type: string
+      enum: [TO_DO, IN_PROGRESS, DONE]
+    TimeEntryType:
+      type: string
+      enum: [BILLABLE, ADMINISTRATIVE]
+
+    ClientRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        contactEmail: { type: string, format: email }
+        notes: { type: string, maxLength: 2000 }
+    Client:
+      allOf:
+        - $ref: '#/components/schemas/ClientRequest'
+        - type: object
+          required: [id, createdAt]
+          properties:
+            id: { type: string }
+            createdAt: { type: string, format: date-time }
+
+    ProjectRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        description: { type: string, maxLength: 2000 }
+    Project:
+      allOf:
+        - $ref: '#/components/schemas/ProjectRequest'
+        - type: object
+          required: [id, clientId, createdAt]
+          properties:
+            id: { type: string }
+            clientId: { type: string }
+            createdAt: { type: string, format: date-time }
+
+    TaskRequest:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 2000 }
+    Task:
+      allOf:
+        - $ref: '#/components/schemas/TaskRequest'
+        - type: object
+          required: [id, projectId, status, createdAt]
+          properties:
+            id: { type: string }
+            projectId: { type: string }
+            status: { $ref: '#/components/schemas/TaskStatus' }
+            createdAt: { type: string, format: date-time }
+    TaskStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: '#/components/schemas/TaskStatus' }
+
+    TimeEntryRequest:
+      type: object
+      required: [minutes, workDate]
+      properties:
+        minutes: { type: integer, minimum: 1, description: Duration in minutes, must be > 0 }
+        workDate: { type: string, format: date }
+        type:
+          allOf:
+            - $ref: '#/components/schemas/TimeEntryType'
+          default: BILLABLE
+        description: { type: string, maxLength: 2000 }
+    TimeEntry:
+      type: object
+      required: [id, taskId, projectId, clientId, minutes, workDate, type, createdAt]
+      properties:
+        id: { type: string }
+        taskId: { type: string }
+        projectId: { type: string, description: Derived from task (permanent) }
+        clientId: { type: string, description: Derived from task (permanent) }
+        minutes: { type: integer }
+        workDate: { type: string, format: date }
+        type: { $ref: '#/components/schemas/TimeEntryType' }
+        description: { type: string }
+        createdAt: { type: string, format: date-time }
+    TimeEntryClassificationUpdate:
+      type: object
+      required: [type]
+      properties:
+        type: { $ref: '#/components/schemas/TimeEntryType' }
+
+    HoursReport:
+      type: object
+      required: [billableMinutes, administrativeMinutes, totalMinutes]
+      properties:
+        clientId: { type: string, nullable: true }
+        projectId: { type: string, nullable: true }
+        taskId: { type: string, nullable: true }
+        billableMinutes: { type: integer }
+        administrativeMinutes: { type: integer }
+        totalMinutes: { type: integer }
+
+    ProblemDetail:
+      type: object
+      properties:
+        status: { type: integer }
+        title: { type: string }
+        detail: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
