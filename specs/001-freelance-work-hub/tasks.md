@@ -71,7 +71,8 @@ them (never hand-edit generated code).
   `ValidationException`→400, all serialized to the generated `ProblemDetail` DTO.
 - [ ] T008 [P] Create a shared timestamp/identity strategy in
   `src/main/java/.../infrastructure/adapter/out/persistence/` (base JPA `@MappedSuperclass` with
-  generated id + `createdAt`, or `@PrePersist` hook) reused by all persistence entities.
+  a `UUID` id generated via `@GeneratedValue(strategy = UUID)` + `createdAt` set on `@PrePersist`)
+  reused by all persistence entities. Domain models carry the id as `UUID`; DTOs serialize it as string.
 
 **Checkpoint**: Foundation ready — user stories can begin.
 
@@ -147,12 +148,14 @@ changing the task status leaves associations unchanged; multiple entries coexist
 
 - [ ] T025 [P] [US2] Functional Gherkin scenarios in
   `src/test/resources/features/log-time.feature` (log time on a TO_DO task; associations stable
-  after status change; reject minutes ≤ 0; reject non-existent task).
+  after status change; reject minutes ≤ 0; reject non-existent task; **multiple entries on one
+  task all persist and list — FR-010**).
 - [ ] T026 [P] [US2] Cucumber step definitions for time logging in
   `src/test/java/.../functional/steps/TimeLoggingSteps.java`.
 - [ ] T027 [P] [US2] Unit tests in `src/test/java/.../domain/TimeEntryTest.java` (duration > 0,
   immutable associations) and `src/test/java/.../application/service/LogTimeServiceTest.java`
-  (resolves project+client from task; rejects invalid task/duration).
+  (resolves project+client from task; rejects invalid task/duration; **logging multiple entries
+  against the same task stores each independently and all are retrievable — FR-010**).
 - [ ] T028 [P] [US2] `@DataJpaTest` integration test for the time-entry persistence adapter in
   `src/test/java/.../infrastructure/adapter/out/persistence/TimeEntryPersistenceAdapterTest.java`.
 
@@ -228,7 +231,9 @@ request the hours report → billable and administrative minutes reported separa
 - [ ] T046 [P] Execute `specs/001-freelance-work-hub/quickstart.md` end-to-end against `bootRun`
   and confirm all validation-checklist items pass.
 - [ ] T047 Review for SOLID/DRY/YAGNI + Clean Architecture boundary violations (no framework
-  imports in `domain`/`application`, no hand-edited generated code); refactor as needed.
+  imports in `domain`/`application`, no hand-edited generated code); refactor as needed. Confirm
+  FR-015: no synchronization/import/export endpoints or clients to Trello/Toggl/Notion/Sheets
+  exist in the API surface or dependencies.
 
 ---
 

@@ -19,7 +19,7 @@ Task (permanent, non-reassignable).
 
 | Field | Type | Rules |
 |-------|------|-------|
-| id | UUID / Long (generated) | Immutable identity |
+| id | UUID (generated, string-serialized) | Immutable identity |
 | name | String | Required, non-blank, ≤ 120 chars |
 | contactEmail | String (optional) | Valid email format if present |
 | notes / metadata | String (optional) | ≤ 2000 chars |
@@ -32,7 +32,7 @@ Task (permanent, non-reassignable).
 
 | Field | Type | Rules |
 |-------|------|-------|
-| id | UUID / Long (generated) | Immutable identity |
+| id | UUID (generated, string-serialized) | Immutable identity |
 | clientId | reference | Required, must reference an existing Client (FR-002, FR-014) |
 | name | String | Required, non-blank, ≤ 120 chars |
 | description | String (optional) | ≤ 2000 chars |
@@ -46,7 +46,7 @@ Task (permanent, non-reassignable).
 
 | Field | Type | Rules |
 |-------|------|-------|
-| id | UUID / Long (generated) | Immutable identity |
+| id | UUID (generated, string-serialized) | Immutable identity |
 | projectId | reference | Required, must reference an existing Project (FR-003, FR-014) |
 | title | String | Required, non-blank, ≤ 200 chars |
 | description | String (optional) | ≤ 2000 chars |
@@ -74,7 +74,7 @@ Task (permanent, non-reassignable).
 
 | Field | Type | Rules |
 |-------|------|-------|
-| id | UUID / Long (generated) | Immutable identity |
+| id | UUID (generated, string-serialized) | Immutable identity |
 | taskId | reference | Required, must reference an existing Task (FR-008, FR-014); immutable after creation (FR-009) |
 | minutes | Integer (duration) | Required, **> 0** (FR-014); rejects zero/negative |
 | workDate | Date/DateTime | Required; when the work occurred |
@@ -94,7 +94,7 @@ Task (permanent, non-reassignable).
 
 | Field | Type | Rules |
 |-------|------|-------|
-| id | UUID / Long (generated) | Immutable identity |
+| id | UUID (generated, string-serialized) | Immutable identity |
 | ownerType | enum {CLIENT, PROJECT, TASK} | Required |
 | ownerId | reference | Required, must reference an existing owner of ownerType |
 | body | String | Required, non-blank, ≤ 4000 chars |
