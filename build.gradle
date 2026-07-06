@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.1.0'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.openapi.generator' version '7.16.0'
+    id 'jacoco'
 }
 
 group = 'com.mickels'
@@ -19,17 +21,132 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-h2console'
+    // Web + validation + persistence
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-h2console'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // Testing (JUnit5, Mockito, AssertJ) + Spring Boot test slices
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+
+    // Functional BDD (Cucumber)
+    testImplementation platform('io.cucumber:cucumber-bom:7.20.1')
+    testImplementation 'io.cucumber:cucumber-java'
+    testImplementation 'io.cucumber:cucumber-spring'
+    testImplementation 'io.cucumber:cucumber-junit-platform-engine'
+    testImplementation 'org.junit.platform:junit-platform-suite'
+    // TestRestTemplate (spring-boot-resttestclient) needs RestTemplateBuilder from this module
+    testImplementation 'org.springframework.boot:spring-boot-restclient'
+    // Enables TestRestTemplate PATCH support in functional tests
+    testImplementation 'org.apache.httpcomponents.client5:httpclient5'
+    // JSON parsing helper in functional steps
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind'
+
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+// ---------------------------------------------------------------------------
+// API First (Principle IV): generate server interfaces + DTOs from the OpenAPI
+// contract. Generated code lives under build/generated and is never hand-edited.
+// ---------------------------------------------------------------------------
+def generatedDir = layout.buildDirectory.dir('generated').get().asFile.absolutePath
+
+openApiGenerate {
+    generatorName = 'spring'
+    inputSpec = "${projectDir}/src/main/resources/openapi/freelancer-tools-api.yaml"
+    outputDir = generatedDir
+    apiPackage = 'com.mickels.freelancertoolsservice.api'
+    modelPackage = 'com.mickels.freelancertoolsservice.api.model'
+    configOptions = [
+        interfaceOnly       : 'true',
+        useSpringBoot3      : 'true',
+        useJakartaEe        : 'true',
+        useTags             : 'true',
+        openApiNullable     : 'false',
+        documentationProvider: 'none',
+        annotationLibrary   : 'none',
+        skipDefaultInterface: 'false'
+    ]
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir "${generatedDir}/src/main/java"
+        }
+    }
+}
+
+tasks.named('compileJava') {
+    dependsOn tasks.named('openApiGenerate')
+}
+
+// ---------------------------------------------------------------------------
+// Coverage gates (Principle V): JaCoCo report + verification.
+// Per-class LINE > 80% and global (BUNDLE) LINE >= 80%. Build fails on breach.
+// Generated OpenAPI code, the Spring Boot bootstrap, and config are excluded.
+// ---------------------------------------------------------------------------
+jacoco {
+    toolVersion = '0.8.13'
+}
+
+def coverageExclusions = [
+    '**/api/**',
+    '**/openapitools/**',
+    '**/*Application*',
+    '**/config/**'
+]
+
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+def filteredClassDirs = files(sourceSets.main.output.classesDirs.collect {
+    fileTree(dir: it, exclude: coverageExclusions)
+})
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    classDirectories.setFrom(filteredClassDirs)
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    classDirectories.setFrom(filteredClassDirs)
+    violationRules {
+        // Global coverage >= 80%
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.80
+            }
+        }
+        // Per-class coverage > 80%
+        rule {
+            element = 'CLASS'
+            excludes = coverageExclusions
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.8001
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
 }
