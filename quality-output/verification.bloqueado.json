@@ -1,0 +1,125 @@
+{
+  "proyecto": "freelancer-tools-service",
+  "version": "0.0.1-SNAPSHOT",
+  "fecha": "2026-07-06",
+  "commit": "af81338",
+  "tests": {
+    "comando": "./gradlew test jacocoTestReport",
+    "passed": 91,
+    "total": 91,
+    "coverage": 98.42,
+    "coverage_fuente": "build/reports/jacoco/test/jacocoTestReport.xml (report-level <counter type=\"LINE\" missed=\"6\" covered=\"374\"/>, 374/380 = 98.42%; per-class min 91.49% en PersistenceMapper, todas las 33 clases medibles > 80%)"
+  },
+  "security": {
+    "fuente": "Semgrep CLI vía uvx (equivalente a Semgrep MCP: semgrep_scan) con --config auto + p/secrets + p/security-audit + p/owasp-top-ten sobre src/main/java (50 archivos, 165 y 128 reglas respectivamente) + grep manual de secretos en src/main y application.yaml",
+    "critical": 0,
+    "high": 0,
+    "secrets": 0,
+    "hallazgos": [
+      {
+        "archivo": "src/main/java/com/mickels/freelancertoolsservice/infrastructure/adapter/in/web/ (ClientController.java, ProjectController.java, TaskController.java, TimeEntryController.java, ReportController.java)",
+        "linea": 0,
+        "descripcion": "Informativo (no critical/high, no bloquea): no hay spring-boot-starter-security ni ningun @PreAuthorize/SecurityFilterChain en el proyecto; todos los endpoints REST son publicos/sin autenticacion. Semgrep (auto+secrets+security-audit+owasp-top-ten) no lo marca como hallazgo porque no hay regla generica que lo detecte sin config de security explicita. Esto coincide con specs/001-freelance-work-hub/spec.md seccion 'Assumptions -> Single user context: The MVP serves a single freelancer... multi-user accounts, sharing, and permissions are out of scope for this story', es decir, es una decision de alcance documentada, no una vulnerabilidad introducida por el codigo. Se reporta por transparencia."
+      }
+    ]
+  },
+  "spec": "specs/001-freelance-work-hub/spec.md",
+  "criteria": [
+    {
+      "id": "FR-001",
+      "fuente": "spec.md · FR-001 (CRUD de clients)",
+      "status": "cumple",
+      "evidencia": "ManageClientServiceTest: createsClient, getMissing, updatesClient, listsClients, deleteMissing PASAN; ClientControllerTest: createsClient, getsClient, listsClients, updatesClient, deletesClient PASAN; ClientPersistenceAdapterTest.savesAndReads PASA"
+    },
+    {
+      "id": "FR-002",
+      "fuente": "spec.md · FR-002 (project asociado a exactamente un client existente)",
+      "status": "cumple",
+      "evidencia": "ManageProjectServiceTest.createRejectsMissingClient (rechaza client inexistente) y createsProject (asocia clientId) PASAN"
+    },
+    {
+      "id": "FR-003",
+      "fuente": "spec.md · FR-003 (task asociado a exactamente un project existente)",
+      "status": "cumple",
+      "evidencia": "ManageTaskServiceTest.createRejectsMissingProject (rechaza project inexistente) y createsTask PASAN"
+    },
+    {
+      "id": "FR-004",
+      "fuente": "spec.md · FR-004 (registrar task aunque el client no tuviera tasks previas, sin dependencia externa)",
+      "status": "cumple",
+      "evidencia": "features/manage-clients-projects-tasks.feature escenario 'Register a client, a project and a task' (WorkHubSteps) PASA end-to-end via API; ManageTaskServiceTest.createsTask PASA"
+    },
+    {
+      "id": "FR-005",
+      "fuente": "spec.md · FR-005 (exactamente 3 estados de task, rechazar cualquier otro valor) + Edge Case 'unknown state value'",
+      "status": "incumple",
+      "evidencia": "TaskTest.changesToAnyStatus (parametrizado sobre TaskStatus.values()) y TaskTest.rejectsNullStatus PASAN, pero NO existe ninguna prueba que envie un valor de estado invalido/desconocido (p.ej. status=\"CANCELLED\") al endpoint PATCH /tasks/{id}/status y verifique el rechazo (400). TaskControllerTest solo prueba TO_DO/IN_PROGRESS/DONE. Grep en TaskControllerTest y en los .feature no encontro ningun escenario 'invalid'/'unknown'. El Edge Case explicito del spec.md ('How does the system handle ... an unknown state value?') queda sin prueba que lo demuestre."
+    },
+    {
+      "id": "FR-006",
+      "fuente": "spec.md · FR-006 (task nuevo por defecto en To Do)",
+      "status": "cumple",
+      "evidencia": "TaskTest.defaultsToToDo y nullStatusDefaults PASAN; ManageTaskServiceTest.createsTask PASA; feature 'Register a client, a project and a task' PASA"
+    },
+    {
+      "id": "FR-007",
+      "fuente": "spec.md · FR-007 (cambio de estado persistido)",
+      "status": "cumple",
+      "evidencia": "ManageTaskServiceTest.updatesStatus PASA; TaskControllerTest.updatesStatus PASA; TaskPersistenceAdapterTest.savesAndReads (round-trip de status TO_DO->DONE) PASA; feature 'Move a task through its states' PASA"
+    },
+    {
+      "id": "FR-008",
+      "fuente": "spec.md · FR-008 (log de time entries contra un task existente con duracion y fecha)",
+      "status": "cumple",
+      "evidencia": "LogTimeServiceTest.logsTimeWithFullAssociation PASA; feature log-time.feature escenario 'Log time and keep associations after a status change' PASA"
+    },
+    {
+      "id": "FR-009",
+      "fuente": "spec.md · FR-009 (asociacion permanente time entry-task-project-client, inmutable)",
+      "status": "cumple",
+      "evidencia": "LogTimeServiceTest.logsTimeWithFullAssociation (comentario 'FR-009' en @DisplayName) PASA; TimeEntryPersistenceAdapterTest.associationsRoundTrip PASA; feature log-time.feature 'Log time and keep associations after a status change' verifica que la asociacion persiste tras cambiar el estado del task"
+    },
+    {
+      "id": "FR-010",
+      "fuente": "spec.md · FR-010 (task con multiples time entries independientes)",
+      "status": "cumple",
+      "evidencia": "LogTimeServiceTest.listsMultipleEntries (@DisplayName cita FR-010) PASA; TimeEntryPersistenceAdapterTest.storesMultipleEntriesPerTask PASA; feature log-time.feature 'Multiple entries on one task all persist and list' PASA"
+    },
+    {
+      "id": "FR-011",
+      "fuente": "spec.md · FR-011 (clasificacion billable/administrative en la entry, no en el task)",
+      "status": "cumple",
+      "evidencia": "TimeEntryTest.defaultsToBillable y reclassifyPreservesAssociations PASAN; ClassifyTimeEntryServiceTest.reclassifies PASA; feature hours-report.feature 'Re-classify a time entry and see it move in the report' PASA"
+    },
+    {
+      "id": "FR-012",
+      "fuente": "spec.md · FR-012 (hours report agrupado por clasificacion, escalable a client/project/task)",
+      "status": "cumple",
+      "evidencia": "HoursReportServiceTest.groupsByType (@DisplayName cita FR-012) PASA; HoursReportQueryTest.sumsByTypeAndScope PASA (verifica scoping por client y por task; scoping por project usa la misma firma sumMinutes(type, clientId, projectId, taskId) por lo que el mecanismo es el mismo, aunque no hay aserto explicito de scope=project); feature hours-report.feature PASA"
+    },
+    {
+      "id": "FR-013",
+      "fuente": "spec.md · FR-013 (evitar perdida de datos historicos al borrar client/project/task con dependientes)",
+      "status": "cumple",
+      "evidencia": "ManageClientServiceTest.deleteWithProjectsRejected, ManageProjectServiceTest.deleteWithTasksRejected, ManageTaskServiceTest.deleteWithEntriesRejected (los tres @DisplayName citan FR-013) PASAN, lanzan DependentRecordsException; feature manage-clients-projects-tasks.feature 'Deleting a client that still has projects is rejected' -> 409 PASA"
+    },
+    {
+      "id": "FR-014",
+      "fuente": "spec.md · FR-014 (rechazar inputs invalidos: referencias huerfanas y duraciones no positivas)",
+      "status": "cumple",
+      "evidencia": "ManageProjectServiceTest.createRejectsMissingClient, ManageTaskServiceTest.createRejectsMissingProject, LogTimeServiceTest.rejectsMissingTask/rejectsMissingProject PASAN (referencias huerfanas); TimeEntryTest.rejectsZeroMinutes/rejectsNegativeMinutes PASAN; feature log-time.feature 'Reject a non-positive duration' (400) y 'Logging against a non-existent task is rejected' (404) PASAN"
+    },
+    {
+      "id": "FR-015",
+      "fuente": "spec.md · FR-015 (hub independiente, sin sincronizacion con Trello/Toggl/Notion/Sheets)",
+      "status": "cumple",
+      "evidencia": "Grep de 'trello|toggl|notion|sheets|webhook|third-party' en src/main y src/test no encuentra ninguna integracion de codigo (solo aparece 'notes' como texto libre en el contrato OpenAPI, sin relacion); todos los escenarios funcionales (manage-clients-projects-tasks.feature, log-time.feature, hours-report.feature) completan el flujo end-to-end unicamente contra la API interna /api/v1, sin llamadas externas"
+    },
+    {
+      "id": "FR-016",
+      "fuente": "spec.md · FR-016 (SHOULD: notas adjuntas a client, project o task)",
+      "status": "incumple",
+      "evidencia": "Solo Client tiene un campo 'notes' verificado por prueba (ClientTest.createsUnsavedClient / withDetailsPreservesIdentity assertan getNotes(); ClientPersistenceAdapterTest.savesAndReads guarda 'note' pero no lo lee de vuelta). Project y Task NO tienen campo 'notes': solo 'description', fijado en la creacion, no una nota adicional libre. No existe una entidad Note (Key Entities del spec.md la describe como adjunta a cualquiera de los tres) ni prueba alguna que adjunte/lea notas sobre Project o Task. Requisito SHOULD, explicitamente diferible segun spec.md Assumptions ('Notes scope... may be delivered after US1-3 without blocking the MVP'), pero tal como esta hoy no cumple lo especificado en FR-016 para Project/Task."
+    }
+  ]
+}
