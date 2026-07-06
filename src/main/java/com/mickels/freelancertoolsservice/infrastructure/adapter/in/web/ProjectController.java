@@ -24,7 +24,7 @@ public class ProjectController implements ProjectsApi {
     @Override
     public ResponseEntity<Project> createProject(String clientId, ProjectRequest request) {
         var created = useCase.create(WebMapper.parseId(clientId),
-                new ProjectCommand(request.getName(), request.getDescription()));
+                new ProjectCommand(request.getName(), request.getDescription(), request.getNotes()));
         return ResponseEntity.status(HttpStatus.CREATED).body(WebMapper.toDto(created));
     }
 

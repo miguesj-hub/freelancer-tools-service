@@ -28,6 +28,9 @@ public class TaskJpaEntity extends BaseEntity {
     @Column(length = 2000)
     private String description;
 
+    @Column(length = 2000)
+    private String notes;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TaskStatus status;

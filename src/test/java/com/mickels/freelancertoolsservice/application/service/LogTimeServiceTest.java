@@ -50,9 +50,9 @@ class LogTimeServiceTest {
     @DisplayName("Given an existing task, when logging time, then the entry is tied to task, project and client (FR-009)")
     void logsTimeWithFullAssociation() {
         when(taskRepository.findById(taskId))
-                .thenReturn(Optional.of(new Task(taskId, projectId, "t", null, TaskStatus.TO_DO, Instant.now())));
+                .thenReturn(Optional.of(new Task(taskId, projectId, "t", null, null, TaskStatus.TO_DO, Instant.now())));
         when(projectRepository.findById(projectId))
-                .thenReturn(Optional.of(new Project(projectId, clientId, "p", null, Instant.now())));
+                .thenReturn(Optional.of(new Project(projectId, clientId, "p", null, null, Instant.now())));
         when(timeEntryRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         TimeEntry entry = service.log(taskId, new LogTimeCommand(90, LocalDate.now(), null, null));
@@ -75,7 +75,7 @@ class LogTimeServiceTest {
     @DisplayName("Given a task whose project is missing, when logging time, then not-found is raised")
     void rejectsMissingProject() {
         when(taskRepository.findById(taskId))
-                .thenReturn(Optional.of(new Task(taskId, projectId, "t", null, TaskStatus.TO_DO, Instant.now())));
+                .thenReturn(Optional.of(new Task(taskId, projectId, "t", null, null, TaskStatus.TO_DO, Instant.now())));
         when(projectRepository.findById(projectId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.log(taskId, new LogTimeCommand(30, LocalDate.now(), null, null)))
                 .isInstanceOf(EntityNotFoundException.class);

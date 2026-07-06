@@ -19,22 +19,24 @@ public class Task {
     private final UUID projectId;
     private final String title;
     private final String description;
+    private final String notes;
     private final TaskStatus status;
     private final Instant createdAt;
 
     public Task(UUID id, UUID projectId, String title, String description,
-                TaskStatus status, Instant createdAt) {
+                String notes, TaskStatus status, Instant createdAt) {
         this.id = id;
         this.projectId = requireProjectId(projectId);
         this.title = requireTitle(title);
         this.description = description;
+        this.notes = notes;
         this.status = status == null ? TaskStatus.TO_DO : status;
         this.createdAt = createdAt;
     }
 
     /** New task under a project; status defaults to TO_DO (FR-006). */
-    public static Task create(UUID projectId, String title, String description) {
-        return new Task(null, projectId, title, description, TaskStatus.TO_DO, null);
+    public static Task create(UUID projectId, String title, String description, String notes) {
+        return new Task(null, projectId, title, description, notes, TaskStatus.TO_DO, null);
     }
 
     /** A copy with a new status (FR-007). Any of the three states is allowed. */
@@ -42,7 +44,7 @@ public class Task {
         if (newStatus == null) {
             throw new ValidationException("Task status must not be null");
         }
-        return new Task(this.id, this.projectId, this.title, this.description, newStatus, this.createdAt);
+        return new Task(this.id, this.projectId, this.title, this.description, this.notes, newStatus, this.createdAt);
     }
 
     private static UUID requireProjectId(UUID projectId) {

@@ -48,11 +48,12 @@ public final class PersistenceMapper {
         e.setClientId(project.getClientId());
         e.setName(project.getName());
         e.setDescription(project.getDescription());
+        e.setNotes(project.getNotes());
         return e;
     }
 
     public static Project toDomain(ProjectJpaEntity e) {
-        return new Project(e.getId(), e.getClientId(), e.getName(), e.getDescription(), e.getCreatedAt());
+        return new Project(e.getId(), e.getClientId(), e.getName(), e.getDescription(), e.getNotes(), e.getCreatedAt());
     }
 
     // ---- Task ----
@@ -68,13 +69,14 @@ public final class PersistenceMapper {
         e.setProjectId(task.getProjectId());
         e.setTitle(task.getTitle());
         e.setDescription(task.getDescription());
+        e.setNotes(task.getNotes());
         e.setStatus(task.getStatus());
         return e;
     }
 
     public static Task toDomain(TaskJpaEntity e) {
         return new Task(e.getId(), e.getProjectId(), e.getTitle(), e.getDescription(),
-                e.getStatus(), e.getCreatedAt());
+                e.getNotes(), e.getStatus(), e.getCreatedAt());
     }
 
     // ---- TimeEntry ----

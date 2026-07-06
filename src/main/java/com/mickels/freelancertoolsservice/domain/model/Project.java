@@ -17,18 +17,20 @@ public class Project {
     private final UUID clientId;
     private final String name;
     private final String description;
+    private final String notes;
     private final Instant createdAt;
 
-    public Project(UUID id, UUID clientId, String name, String description, Instant createdAt) {
+    public Project(UUID id, UUID clientId, String name, String description, String notes, Instant createdAt) {
         this.id = id;
         this.clientId = requireClientId(clientId);
         this.name = requireName(name);
         this.description = description;
+        this.notes = notes;
         this.createdAt = createdAt;
     }
 
-    public static Project create(UUID clientId, String name, String description) {
-        return new Project(null, clientId, name, description, null);
+    public static Project create(UUID clientId, String name, String description, String notes) {
+        return new Project(null, clientId, name, description, notes, null);
     }
 
     private static UUID requireClientId(UUID clientId) {

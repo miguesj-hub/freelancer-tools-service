@@ -130,23 +130,21 @@ then request an hours report and verify each entry is grouped under its type.
 - **FR-015**: System operates as an **independent hub** with **no synchronization** to third-party
   tools (Trello, Toggl, Notion, Sheets). Historical data from other tools is migrated manually or
   abandoned by the user.
-- **FR-016**: System SHOULD allow a user to attach **notes** to a client, project or task, since
-  centralizing notes is part of the single-place goal. *(Lower priority than P1–P3 above; see
-  Assumptions for scope.)*
+- **FR-016**: System MUST allow a user to attach **notes** to a client, project or task, since
+  centralizing notes is part of the single-place goal.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Client**: An entity the freelancer works for. Owns zero or more projects. Attributes: name/
-  identifier, contact/descriptive metadata.
+  identifier, contact/descriptive metadata, notes.
 - **Project**: A body of work belonging to exactly one client. Owns zero or more tasks.
-  Attributes: name, owning client, descriptive metadata.
+  Attributes: name, owning client, descriptive metadata, notes.
 - **Task**: A unit of work belonging to exactly one project. Has a state (To Do / In Progress /
-  Done). Owns zero or more time entries. Attributes: title, description, state, owning project.
+  Done). Owns zero or more time entries. Attributes: title, description, state, owning project,
+  notes.
 - **Time Entry**: A recorded duration of work against exactly one task. Permanently linked to the
   task, its project and its client. Classified as billable or administrative. Attributes:
   duration, date/time of work, classification.
-- **Note** *(optional)*: Free-form text attached to a client, project or task to centralize
-  contextual information.
 
 ## Success Criteria *(mandatory)*
 
@@ -175,8 +173,8 @@ then request an hours report and verify each entry is grouped under its type.
 - **Time-entry classification default**: If a time entry is logged without an explicit
   classification, it defaults to **billable** (the common case for freelancers); the user can
   re-classify it.
-- **Notes scope**: Notes (FR-016) are a supporting capability of the hub. If effort is
-  constrained, notes may be delivered after US1–US3 without blocking the MVP.
+- **Notes scope**: Notes (FR-016) are implemented as a plain optional field directly on Client,
+  Project and Task (same pattern as Client's existing `notes`), not as a separate entity.
 - **No third-party integration**: Per R-18, there is no import/export sync with external tools in
   this feature; manual data entry is assumed.
 - **Time input**: Time is entered manually (duration and work date); live start/stop timers are

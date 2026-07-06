@@ -45,7 +45,7 @@ class ManageTaskServiceTest {
     void createRejectsMissingProject() {
         UUID projectId = UUID.randomUUID();
         when(projectRepository.existsById(projectId)).thenReturn(false);
-        assertThatThrownBy(() -> service.create(projectId, new TaskCommand("t", null)))
+        assertThatThrownBy(() -> service.create(projectId, new TaskCommand("t", null, null)))
                 .isInstanceOf(EntityNotFoundException.class);
         verify(taskRepository, never()).save(any());
     }
@@ -56,8 +56,18 @@ class ManageTaskServiceTest {
         UUID projectId = UUID.randomUUID();
         when(projectRepository.existsById(projectId)).thenReturn(true);
         when(taskRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-        Task created = service.create(projectId, new TaskCommand("Design", null));
+        Task created = service.create(projectId, new TaskCommand("Design", null, null));
         assertThat(created.getStatus()).isEqualTo(TaskStatus.TO_DO);
+    }
+
+    @Test
+    @DisplayName("Given notes in the command, when creating a task, then the notes are persisted (FR-016)")
+    void createsTaskWithNotes() {
+        UUID projectId = UUID.randomUUID();
+        when(projectRepository.existsById(projectId)).thenReturn(true);
+        when(taskRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        Task created = service.create(projectId, new TaskCommand("Design", null, "blocked on assets"));
+        assertThat(created.getNotes()).isEqualTo("blocked on assets");
     }
 
     @Test
@@ -65,7 +75,7 @@ class ManageTaskServiceTest {
     void updatesStatus() {
         UUID id = UUID.randomUUID();
         when(taskRepository.findById(id))
-                .thenReturn(Optional.of(new Task(id, UUID.randomUUID(), "t", null, TaskStatus.TO_DO, Instant.now())));
+                .thenReturn(Optional.of(new Task(id, UUID.randomUUID(), "t", null, null, TaskStatus.TO_DO, Instant.now())));
         when(taskRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         Task updated = service.updateStatus(id, TaskStatus.IN_PROGRESS);
         assertThat(updated.getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);

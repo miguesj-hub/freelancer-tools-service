@@ -45,7 +45,7 @@ class ManageProjectServiceTest {
     void createRejectsMissingClient() {
         UUID clientId = UUID.randomUUID();
         when(clientRepository.existsById(clientId)).thenReturn(false);
-        assertThatThrownBy(() -> service.create(clientId, new ProjectCommand("P", null)))
+        assertThatThrownBy(() -> service.create(clientId, new ProjectCommand("P", null, null)))
                 .isInstanceOf(EntityNotFoundException.class);
         verify(projectRepository, never()).save(any());
     }
@@ -56,8 +56,18 @@ class ManageProjectServiceTest {
         UUID clientId = UUID.randomUUID();
         when(clientRepository.existsById(clientId)).thenReturn(true);
         when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-        Project created = service.create(clientId, new ProjectCommand("Website", "d"));
+        Project created = service.create(clientId, new ProjectCommand("Website", "d", null));
         assertThat(created.getClientId()).isEqualTo(clientId);
+    }
+
+    @Test
+    @DisplayName("Given notes in the command, when creating a project, then the notes are persisted (FR-016)")
+    void createsProjectWithNotes() {
+        UUID clientId = UUID.randomUUID();
+        when(clientRepository.existsById(clientId)).thenReturn(true);
+        when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        Project created = service.create(clientId, new ProjectCommand("Website", "d", "vip client"));
+        assertThat(created.getNotes()).isEqualTo("vip client");
     }
 
     @Test
@@ -82,7 +92,7 @@ class ManageProjectServiceTest {
         UUID clientId = UUID.randomUUID();
         when(clientRepository.existsById(clientId)).thenReturn(true);
         when(projectRepository.findByClientId(clientId))
-                .thenReturn(List.of(new Project(UUID.randomUUID(), clientId, "P", null, Instant.now())));
+                .thenReturn(List.of(new Project(UUID.randomUUID(), clientId, "P", null, null, Instant.now())));
         assertThat(service.listByClient(clientId)).hasSize(1);
     }
 

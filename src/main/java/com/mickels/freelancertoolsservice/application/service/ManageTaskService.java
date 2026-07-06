@@ -32,7 +32,7 @@ public class ManageTaskService implements ManageTaskUseCase {
         if (!projectRepository.existsById(projectId)) {
             throw new EntityNotFoundException("Project", projectId);
         }
-        return taskRepository.save(Task.create(projectId, command.title(), command.description()));
+        return taskRepository.save(Task.create(projectId, command.title(), command.description(), command.notes()));
     }
 
     @Override

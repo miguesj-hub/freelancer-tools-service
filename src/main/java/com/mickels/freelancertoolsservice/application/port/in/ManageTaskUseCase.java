@@ -19,5 +19,5 @@ public interface ManageTaskUseCase {
 
     void delete(UUID id);
 
-    record TaskCommand(String title, String description) {}
+    record TaskCommand(String title, String description, String notes) {}
 }

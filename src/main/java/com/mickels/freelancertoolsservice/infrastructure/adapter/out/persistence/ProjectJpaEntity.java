@@ -24,4 +24,7 @@ public class ProjectJpaEntity extends BaseEntity {
 
     @Column(length = 2000)
     private String description;
+
+    @Column(length = 2000)
+    private String notes;
 }

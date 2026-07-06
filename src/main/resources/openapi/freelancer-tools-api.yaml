@@ -371,6 +371,7 @@ components:
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
         description: { type: string, maxLength: 2000 }
+        notes: { type: string, maxLength: 2000 }
     Project:
       allOf:
         - $ref: '#/components/schemas/ProjectRequest'
@@ -387,6 +388,7 @@ components:
       properties:
         title: { type: string, minLength: 1, maxLength: 200 }
         description: { type: string, maxLength: 2000 }
+        notes: { type: string, maxLength: 2000 }
     Task:
       allOf:
         - $ref: '#/components/schemas/TaskRequest'

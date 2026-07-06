@@ -16,5 +16,5 @@ public interface ManageProjectUseCase {
 
     void delete(UUID id);
 
-    record ProjectCommand(String name, String description) {}
+    record ProjectCommand(String name, String description, String notes) {}
 }

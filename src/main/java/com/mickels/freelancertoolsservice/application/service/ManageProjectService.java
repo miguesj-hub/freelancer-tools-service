@@ -31,7 +31,7 @@ public class ManageProjectService implements ManageProjectUseCase {
         if (!clientRepository.existsById(clientId)) {
             throw new EntityNotFoundException("Client", clientId);
         }
-        return projectRepository.save(Project.create(clientId, command.name(), command.description()));
+        return projectRepository.save(Project.create(clientId, command.name(), command.description(), command.notes()));
     }
 
     @Override

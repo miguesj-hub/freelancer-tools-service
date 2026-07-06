@@ -32,7 +32,7 @@ class TaskControllerTest {
     ManageTaskUseCase useCase;
 
     private Task sample(TaskStatus status) {
-        return new Task(UUID.randomUUID(), UUID.randomUUID(), "Design", "d", status, Instant.now());
+        return new Task(UUID.randomUUID(), UUID.randomUUID(), "Design", "d", "n", status, Instant.now());
     }
 
     @Test
@@ -58,12 +58,29 @@ class TaskControllerTest {
     }
 
     @Test
+    void createsTaskWithNotes() throws Exception {
+        when(useCase.create(any(), any())).thenReturn(sample(TaskStatus.TO_DO));
+        mvc.perform(post("/projects/{projectId}/tasks", UUID.randomUUID())
+                        .contentType("application/json").content("{\"title\":\"Design\",\"notes\":\"n\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.notes").value("n"));
+    }
+
+    @Test
     void updatesStatus() throws Exception {
         when(useCase.updateStatus(any(), any())).thenReturn(sample(TaskStatus.IN_PROGRESS));
         mvc.perform(patch("/tasks/{id}/status", UUID.randomUUID())
                         .contentType("application/json").content("{\"status\":\"IN_PROGRESS\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+    }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("Given an unknown status value, when updating a task, then it is rejected with 400 (FR-005)")
+    void rejectsUnknownStatusValue() throws Exception {
+        mvc.perform(patch("/tasks/{id}/status", UUID.randomUUID())
+                        .contentType("application/json").content("{\"status\":\"CANCELLED\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

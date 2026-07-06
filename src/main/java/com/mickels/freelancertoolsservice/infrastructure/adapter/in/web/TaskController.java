@@ -25,7 +25,7 @@ public class TaskController implements TasksApi {
     @Override
     public ResponseEntity<Task> createTask(String projectId, TaskRequest request) {
         var created = useCase.create(WebMapper.parseId(projectId),
-                new TaskCommand(request.getTitle(), request.getDescription()));
+                new TaskCommand(request.getTitle(), request.getDescription(), request.getNotes()));
         return ResponseEntity.status(HttpStatus.CREATED).body(WebMapper.toDto(created));
     }
 

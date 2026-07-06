@@ -7,8 +7,7 @@ classes in `adapter/out/persistence` mirror these and are mapped to/from the dom
 
 ```text
 Client 1 ──< Project 1 ──< Task 1 ──< TimeEntry
-   │              │            │
-   └──< Note      └──< Note    └──< Note      (Note is polymorphic-by-owner, optional)
+(each of Client, Project, Task carries its own optional `notes` field — see FR-016)
 ```
 
 Strict ownership hierarchy: a Project belongs to exactly one Client; a Task to exactly one
@@ -36,6 +35,7 @@ Task (permanent, non-reassignable).
 | clientId | reference | Required, must reference an existing Client (FR-002, FR-014) |
 | name | String | Required, non-blank, ≤ 120 chars |
 | description | String (optional) | ≤ 2000 chars |
+| notes | String (optional) | ≤ 2000 chars (FR-016) |
 | createdAt | Timestamp | Set on creation |
 
 - **Relationships**: belongs to 1 Client; owns 0..* Task.
@@ -50,6 +50,7 @@ Task (permanent, non-reassignable).
 | projectId | reference | Required, must reference an existing Project (FR-003, FR-014) |
 | title | String | Required, non-blank, ≤ 200 chars |
 | description | String (optional) | ≤ 2000 chars |
+| notes | String (optional) | ≤ 2000 chars (FR-016) |
 | status | TaskStatus enum | Required; defaults to `TO_DO` on creation (FR-006) |
 | createdAt | Timestamp | Set on creation |
 
@@ -90,17 +91,12 @@ Task (permanent, non-reassignable).
 
 `BILLABLE | ADMINISTRATIVE` — classification lives on the TimeEntry, not the Task.
 
-## Note (optional — FR-016)
+## Notes (FR-016)
 
-| Field | Type | Rules |
-|-------|------|-------|
-| id | UUID (generated, string-serialized) | Immutable identity |
-| ownerType | enum {CLIENT, PROJECT, TASK} | Required |
-| ownerId | reference | Required, must reference an existing owner of ownerType |
-| body | String | Required, non-blank, ≤ 4000 chars |
-| createdAt | Timestamp | Set on creation |
-
-- Delivered after US1–US3 if effort allows; does not block MVP.
+Implemented as a plain optional `notes` field directly on Client, Project and Task — the same
+pattern already used for Client — rather than as a separate polymorphic entity. This is the
+simplest option consistent with the single-place goal and avoids an extra table/join for a
+single free-text field per owner.
 
 ## Derived / Reporting Model — HoursReport (FR-012)
 

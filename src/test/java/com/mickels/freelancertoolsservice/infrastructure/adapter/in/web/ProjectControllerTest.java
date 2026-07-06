@@ -30,7 +30,7 @@ class ProjectControllerTest {
     ManageProjectUseCase useCase;
 
     private Project sample(UUID clientId) {
-        return new Project(UUID.randomUUID(), clientId, "Website", "d", Instant.now());
+        return new Project(UUID.randomUUID(), clientId, "Website", "d", "n", Instant.now());
     }
 
     @Test
@@ -41,6 +41,16 @@ class ProjectControllerTest {
                         .contentType("application/json").content("{\"name\":\"Website\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Website"));
+    }
+
+    @Test
+    void createsProjectWithNotes() throws Exception {
+        UUID clientId = UUID.randomUUID();
+        when(useCase.create(any(), any())).thenReturn(sample(clientId));
+        mvc.perform(post("/clients/{clientId}/projects", clientId)
+                        .contentType("application/json").content("{\"name\":\"Website\",\"notes\":\"n\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.notes").value("n"));
     }
 
     @Test

@@ -36,6 +36,7 @@ public final class WebMapper {
                 .clientId(idToString(p.getClientId()))
                 .name(p.getName())
                 .description(p.getDescription())
+                .notes(p.getNotes())
                 .createdAt(toOffset(p.getCreatedAt()));
     }
 
@@ -48,6 +49,7 @@ public final class WebMapper {
                 .projectId(idToString(t.getProjectId()))
                 .title(t.getTitle())
                 .description(t.getDescription())
+                .notes(t.getNotes())
                 .status(com.mickels.freelancertoolsservice.api.model.TaskStatus.valueOf(t.getStatus().name()))
                 .createdAt(toOffset(t.getCreatedAt()));
     }

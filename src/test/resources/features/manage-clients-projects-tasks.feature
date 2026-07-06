@@ -21,3 +21,10 @@ Feature: Manage clients, projects and tasks in one hub
     And a project "Website Redesign" for that client
     When I delete the client
     Then the request is rejected with status 409
+
+  Scenario: Setting a task to an unknown status is rejected
+    Given a client "Acme Studio"
+    And a project "Website Redesign" for that client
+    And a task "Design homepage" for that project
+    When I set the task status to "CANCELLED"
+    Then the request is rejected with status 400

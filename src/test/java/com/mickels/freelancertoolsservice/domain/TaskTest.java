@@ -18,14 +18,21 @@ class TaskTest {
     @Test
     @DisplayName("Given a project, when creating a task, then it defaults to TO_DO")
     void defaultsToToDo() {
-        Task task = Task.create(UUID.randomUUID(), "Design homepage", null);
+        Task task = Task.create(UUID.randomUUID(), "Design homepage", null, null);
         assertThat(task.getStatus()).isEqualTo(TaskStatus.TO_DO);
+    }
+
+    @Test
+    @DisplayName("Given notes, when creating a task, then the notes are attached (FR-016)")
+    void createsTaskWithNotes() {
+        Task task = Task.create(UUID.randomUUID(), "Design homepage", null, "waiting on brand assets");
+        assertThat(task.getNotes()).isEqualTo("waiting on brand assets");
     }
 
     @Test
     @DisplayName("Given a null status in the constructor, when building a task, then it defaults to TO_DO")
     void nullStatusDefaults() {
-        Task task = new Task(null, UUID.randomUUID(), "t", null, null, null);
+        Task task = new Task(null, UUID.randomUUID(), "t", null, null, null, null);
         assertThat(task.getStatus()).isEqualTo(TaskStatus.TO_DO);
     }
 
@@ -33,34 +40,34 @@ class TaskTest {
     @EnumSource(TaskStatus.class)
     @DisplayName("Given a task, when changing to any valid status, then the new status is applied")
     void changesToAnyStatus(TaskStatus target) {
-        Task task = Task.create(UUID.randomUUID(), "t", null);
+        Task task = Task.create(UUID.randomUUID(), "t", null, null);
         assertThat(task.withStatus(target).getStatus()).isEqualTo(target);
     }
 
     @Test
     @DisplayName("Given a task, when changing status to null, then validation fails")
     void rejectsNullStatus() {
-        Task task = Task.create(UUID.randomUUID(), "t", null);
+        Task task = Task.create(UUID.randomUUID(), "t", null, null);
         assertThatThrownBy(() -> task.withStatus(null)).isInstanceOf(ValidationException.class);
     }
 
     @Test
     @DisplayName("Given no project, when creating a task, then validation fails")
     void rejectsNullProject() {
-        assertThatThrownBy(() -> Task.create(null, "t", null)).isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> Task.create(null, "t", null, null)).isInstanceOf(ValidationException.class);
     }
 
     @Test
     @DisplayName("Given a blank title, when creating a task, then validation fails")
     void rejectsBlankTitle() {
-        assertThatThrownBy(() -> Task.create(UUID.randomUUID(), " ", null))
+        assertThatThrownBy(() -> Task.create(UUID.randomUUID(), " ", null, null))
                 .isInstanceOf(ValidationException.class);
     }
 
     @Test
     @DisplayName("Given an over-long title, when creating a task, then validation fails")
     void rejectsLongTitle() {
-        assertThatThrownBy(() -> Task.create(UUID.randomUUID(), "x".repeat(201), null))
+        assertThatThrownBy(() -> Task.create(UUID.randomUUID(), "x".repeat(201), null, null))
                 .isInstanceOf(ValidationException.class);
     }
 
@@ -69,10 +76,11 @@ class TaskTest {
     void preservesIdentityOnStatusChange() {
         UUID id = UUID.randomUUID();
         UUID projectId = UUID.randomUUID();
-        Task task = new Task(id, projectId, "t", "d", TaskStatus.TO_DO, null);
+        Task task = new Task(id, projectId, "t", "d", "n", TaskStatus.TO_DO, null);
         Task moved = task.withStatus(TaskStatus.DONE);
         assertThat(moved.getId()).isEqualTo(id);
         assertThat(moved.getProjectId()).isEqualTo(projectId);
         assertThat(moved.getDescription()).isEqualTo("d");
+        assertThat(moved.getNotes()).isEqualTo("n");
     }
 }

@@ -23,7 +23,7 @@ class TaskPersistenceAdapterTest {
     @DisplayName("Given a task, when saved and re-read, then status round-trips and it lists by project")
     void savesAndReads() {
         UUID projectId = UUID.randomUUID();
-        Task saved = adapter.save(Task.create(projectId, "Design", "desc"));
+        Task saved = adapter.save(Task.create(projectId, "Design", "desc", null));
 
         assertThat(saved.getStatus()).isEqualTo(TaskStatus.TO_DO);
         assertThat(adapter.findByProjectId(projectId)).hasSize(1);
@@ -34,9 +34,16 @@ class TaskPersistenceAdapterTest {
     }
 
     @Test
+    @DisplayName("Given a task with notes, when saved and re-read, then the notes round-trip (FR-016)")
+    void roundTripsNotes() {
+        Task saved = adapter.save(Task.create(UUID.randomUUID(), "Design", null, "blocked on assets"));
+        assertThat(adapter.findById(saved.getId()).orElseThrow().getNotes()).isEqualTo("blocked on assets");
+    }
+
+    @Test
     @DisplayName("Given a saved task, when deleted, then it no longer exists")
     void deletes() {
-        Task saved = adapter.save(Task.create(UUID.randomUUID(), "t", null));
+        Task saved = adapter.save(Task.create(UUID.randomUUID(), "t", null, null));
         adapter.deleteById(saved.getId());
         assertThat(adapter.existsById(saved.getId())).isFalse();
     }
